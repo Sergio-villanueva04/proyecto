@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Publicaciones</title>
+  <link rel="stylesheet" href="./../style/css/bootstrap.min.css">
+  <style>
+    .table-trans {
+      --bs-table-bg: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+
+<body style="background-image: url('./../img/fondo.jpg'); background-size: cover;">
+  <div id="navbar"></div>
+  <div class="container min-vh-100 d-flex align-items-center">
+    <div class="row w-100">
+      <div class="col-12 align-items-center">
+        <div class="row justify-content-center">
+          <div class="col-6">
+
+            <div class="card">
+              <div class="card-header text-white bg-primary">
+                <h3 id="tit-redSoc"></h3>
+              </div>
+              <div class="card-body">
+                <div class="m-3">
+                  <h5 class="card-title">Nombre de la Red Social:</h5>
+                  <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre de la Red Social"
+                    onblur="checkVal()">
+                </div>
+                <button type="button" class="btn btn-primary ms-3" onclick="addRedSoc()" id="btnAgregar"
+                  disabled="true">Agregar</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="./../style/js/bootstrap.min.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem('currentUser');
+      window.location.href = "login.html";
+    }
+
+    let btnAgregar = document.getElementById("btnAgregar");
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
+      window.location.href = "login.html";
+    }
+
+    nomRedSoc = document.getElementById("nombre");
+
+    function checkVal() {
+      nomRegex = /^[a-zA-ZÀ-ÿ ]+$/;
+      if (!nomRegex.test(nomRedSoc.value) || nomRedSoc.value.trim() === "") {
+        alert("El nombre de la Red Social solo puede contener letras y espacios.");
+        nomRedSoc.value = "";
+        btnAgregar.disabled = true;
+      } else {
+        btnAgregar.disabled = false;
+      }
+    }
+
+    function addRedSoc() {
+      let newRedSoc = {
+        nombre: nomRedSoc.value.trim(),
+        estatus: "activo"
+      };
+      let redSoc = localStorage.getItem("redSoc");
+      if (redSoc) {
+        redSoc = JSON.parse(redSoc);
+        newRedSoc.id = redSoc.length + 1;
+        for (let i = 0; i < redSoc.length; i++) {
+          if (redSoc[i].nombre.toLowerCase() === newRedSoc.nombre.toLowerCase()) {
+            alert("La Red Social ya existe.");
+            nomRedSoc.value = "";
+            btnAgregar.disabled = true;
+            newRedSoc = null;
+            break;
+          }
+        }
+      } else {
+        redSoc = [];
+        newRedSoc.id = 1;
+      }
+      if (newRedSoc) {
+        redSoc.push(newRedSoc);
+        localStorage.setItem("redSoc", JSON.stringify(redSoc));
+        alert("Red Social agregada correctamente.");
+        nomRedSoc.value = "";
+        btnAgregar.disabled = true;
+      }
+
+    }
+
+    fetch('navbar.html')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('navbar').innerHTML = data;
+
+        let userString = localStorage.getItem('currentUser');
+
+        if (userString) {
+          let currentUser = JSON.parse(userString);
+
+          if (currentUser.tipo === 'admin') {
+            let navContainer = document.querySelector('.navbar-nav');
+
+            if (navContainer) {
+              navContainer.innerHTML += `
+                        <li class="nav-item">
+                            <a class="nav-link" href="listRedSoc.html">Redes Sociales</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="listTipPub.html">Tipos de Publicaciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="listUser.html">Usuarios</a>
+                        </li>
+                    `;
+            }
+          }
+        }
+      })
+      .catch(error => console.error('Error loading the navbar:', error));
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar Sesion</title>
+  <link rel="stylesheet" href="./../style/css/bootstrap.min.css" />
+</head>
+
+<body class="min-vh-100"
+  style="background-image: url('./../img/fondo.jpg'); background-size: cover; background-position: center;">
+  <div class="container min-vh-100 d-flex align-items-center">
+    <div class="row w-100">
+      <div class="col-12 align-items-center">
+        <div class="row justify-content-center">
+          <div class="col-6">
+
+            <div class="card">
+              <div class="card-header text-white bg-primary">
+                <h3>Iniciar Sesion</h3>
+              </div>
+              <div class="card-body">
+                <div class="m-3">
+                  <h5 class="card-title">Usuario:</h5>
+                  <input type="text" class="form-control" id="user" placeholder="Ingrese su Usuario">
+                  <h5 class="card-title">Clave:</h5>
+                  <input type="password" class="form-control" id="pass" placeholder="Ingrese su Clave">
+                </div>
+                <button type="button" class="btn btn-primary ms-3" onclick="login()">Ingresar</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="./../style/js/bootstrap.min.js"></script>
+  <script>
+
+    user = document.getElementById('user');
+    pass = document.getElementById('pass');
+
+    function login() {
+
+      userData = localStorage.getItem('userData');
+      //console.log(JSON.parse(userData));
+      if (userData) {
+        userData = JSON.parse(userData);
+        for (let i = 0; i < userData.length; i++) {
+          if (userData[i].correo === user.value && userData[i].clave === pass.value) {
+            localStorage.setItem('currentUser', JSON.stringify(userData[i]));
+            alert('Inicio de sesión exitoso');
+            window.location.href = "list.html";
+            return;
+          }
+        }
+        alert('Usuario o contraseña incorrectos');
+      } else {
+        alert('No hay datos de usuario almacenados. Por favor, regístrese primero.');
+      }
+    }
+  </script>
+</body>
+
+</html>
