@@ -39,6 +39,10 @@
                                         <tr>
                                             <td class="text-white bg-primary text-center fw-bold fs-5">Nombre
                                             </td>
+                                            <td class="text-white bg-primary text-center fw-bold fs-5">Estatus
+                                            </td>
+                                            <td class="text-white bg-primary text-center fw-bold fs-5">Acciones
+                                            </td>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -62,7 +66,12 @@
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (!currentUser) {
             window.location.href = "login.html";
+        } else if (currentUser.tipo !== 'admin') {
+            window.location.href = "list.html";
         }
+
+        let redSoc = JSON.parse(localStorage.getItem("redSoc"));
+
 
         fetch('navbar.html')
             .then(response => response.text())
@@ -96,37 +105,34 @@
             .catch(error => console.error('Error loading the navbar:', error));
 
         document.addEventListener('DOMContentLoaded', function () {
-            if (currentUser.tipo === 'admin') {
-                const tableHead = document.querySelector('thead tr');
-                const newHeader = document.createElement('td');
-                newHeader.textContent = 'Estatus';
-                tableHead.appendChild(newHeader);
-            }
             const tableBody = document.querySelector('tbody');
-            let redSoc = localStorage.getItem("redSoc");
             if (redSoc) {
-                redSoc = JSON.parse(redSoc);
                 tableBody.innerHTML = '';
                 redSoc.forEach(item => {
-                    if (currentUser.tipo === 'admin') {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${item.nombre}</td>
-                            <td>${item.estatus}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    } else {
-                        if (item.estatus === 'activo') {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${item.nombre}</td>
-                            `;
-                            tableBody.appendChild(row);
-                        }
-                    }
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="text-center">${item.nombre}</td>
+                        <td class="text-center">${item.estatus}</td>
+                        <td class="text-center">
+                            <a href="addEditRedSoc.html?id=${item.id}" class="btn btn-sm btn-primary">Editar</a>
+                            <button onclick="updtRedSoc(${item.id})" class="btn btn-sm btn-danger">${item.estatus === 'Inactivo' ? 'Activar' : 'Desactivar'}</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
                 });
             }
         });
+
+        function updtRedSoc(id) {
+            if (redSoc) {
+                const redSocIndex = redSoc.findIndex(item => item.id === id);
+                if (redSocIndex !== -1) {
+                    redSoc[redSocIndex].estatus = redSoc[redSocIndex].estatus === 'Activo' ? 'Inactivo' : 'Activo';
+                    localStorage.setItem("redSoc", JSON.stringify(redSoc));
+                    location.reload();
+                }
+            }
+        }
     </script>
 </body>
 

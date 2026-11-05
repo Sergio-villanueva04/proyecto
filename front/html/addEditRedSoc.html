@@ -33,6 +33,8 @@
                 </div>
                 <button type="button" class="btn btn-primary ms-3" onclick="addRedSoc()" id="btnAgregar"
                   disabled="true">Agregar</button>
+                <button type="button" class="btn btn-primary ms-3 d-none" onclick="editRedSoc()" id="btnEditar"
+                  disabled="true">Guardar Cambios</button>
               </div>
             </div>
 
@@ -49,12 +51,44 @@
     }
 
     let btnAgregar = document.getElementById("btnAgregar");
+    let btnEditar = document.getElementById("btnEditar");
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) {
-      window.location.href = "login.html";
+        window.location.href = "login.html";
+    } else if (currentUser.tipo !== 'admin') {
+        window.location.href = "list.html";
     }
 
     nomRedSoc = document.getElementById("nombre");
+
+    const queryString = window.location.search;
+
+    const urlParams = new URLSearchParams(queryString);
+
+    let redSocId = urlParams.get('id');
+
+    let redSoc = JSON.parse(localStorage.getItem("redSoc"));
+
+    if (redSocId) {
+      document.getElementById("tit-redSoc").innerText = "Editar Red Social";
+      btnEditar.classList.remove("d-none");
+      btnAgregar.classList.add("d-none");
+      if (redSoc) {
+        let redSocToEdit = redSoc.find(r => r.id == redSocId);
+        if (redSocToEdit) {
+          nomRedSoc.value = redSocToEdit.nombre;
+          btnEditar.disabled = false;
+        } else {
+          alert("Red Social no encontrada.");
+          window.location.href = "listRedSoc.html";
+        }
+      } else {
+        alert("No hay Redes Sociales almacenadas.");
+        window.location.href = "listRedSoc.html";
+      }
+    } else {
+      document.getElementById("tit-redSoc").innerText = "Agregar Red Social";
+    }
 
     function checkVal() {
       nomRegex = /^[a-zA-ZÀ-ÿ ]+$/;
@@ -67,14 +101,28 @@
       }
     }
 
+    function editRedSoc(){
+        const index = redSoc.findIndex(r => r.id == redSocId);
+        if (index !== -1) {
+          redSoc[index].nombre = nomRedSoc.value.trim();
+          localStorage.setItem("redSoc", JSON.stringify(redSoc));
+          alert("Red Social actualizada correctamente.");
+          window.location.href = "listRedSoc.html";
+        } else {
+          alert("Red Social no encontrada.");
+        }
+    }
+
     function addRedSoc() {
       let newRedSoc = {
         nombre: nomRedSoc.value.trim(),
-        estatus: "activo"
+        estatus: "Activo"
       };
-      let redSoc = localStorage.getItem("redSoc");
-      if (redSoc) {
-        redSoc = JSON.parse(redSoc);
+      let editRedSoc = {
+        nombre: nomRedSoc.value.trim(),
+        estatus: "Activo"
+      };
+      if (redSoc && !redSocId) {
         newRedSoc.id = redSoc.length + 1;
         for (let i = 0; i < redSoc.length; i++) {
           if (redSoc[i].nombre.toLowerCase() === newRedSoc.nombre.toLowerCase()) {

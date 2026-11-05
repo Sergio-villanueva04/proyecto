@@ -33,6 +33,8 @@
                 </div>
                 <button type="button" class="btn btn-primary ms-3" onclick="addTipPub()" id="btnAgregar"
                   disabled="true">Agregar</button>
+                <button type="button" class="btn btn-primary ms-3 d-none" onclick="editTipPub()" id="btnEditar"
+                  disabled="true">Guardar Cambios</button>
               </div>
             </div>
 
@@ -51,10 +53,33 @@
     let btnAgregar = document.getElementById("btnAgregar");
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) {
-      window.location.href = "login.html";
+        window.location.href = "login.html";
+    } else if (currentUser.tipo !== 'admin') {
+        window.location.href = "list.html";
     }
 
     nomTipPub = document.getElementById("nombre");
+    let tipPub = JSON.parse(localStorage.getItem("tipPub"));
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
+    let tipPubId = urlParams.get('id');
+
+    if (tipPubId) {
+      document.getElementById("tit-tipPub").innerText = "Editar Tipo de Publicación";
+      btnEditar.classList.remove("d-none");
+      btnAgregar.classList.add("d-none");
+      if (tipPub) {
+        let tipPubToEdit = tipPub.find(t => t.id == tipPubId);
+        if (tipPubToEdit) {
+          nomTipPub.value = tipPubToEdit.nombre;
+          btnEditar.disabled = false;
+        } else {
+          alert("Tipo de Publicación no encontrado.");
+          window.location.href = "listTipPub.html";
+        }
+      }
+    }
 
     function checkVal() {
       nomRegex = /^[a-zA-ZÀ-ÿ ]+$/;
@@ -67,14 +92,24 @@
       }
     }
 
+    function editTipPub() {
+      const index = tipPub.findIndex(t => t.id == tipPubId);
+      if (index !== -1) {
+        tipPub[index].nombre = nomTipPub.value.trim();
+        localStorage.setItem("tipPub", JSON.stringify(tipPub));
+        alert("Tipo de Publicación actualizado correctamente.");
+        window.location.href = "listTipPub.html";
+      } else {
+        alert("Tipo de Publicación no encontrado.");
+      }
+    }
+
     function addTipPub() {
       let newTipPub = {
         nombre: nomTipPub.value.trim(),
-        estatus: "activo"
+        estatus: "Activo"
       };
-      let tipPub = localStorage.getItem("tipPub");
       if (tipPub) {
-        tipPub = JSON.parse(tipPub);
         newTipPub.id = tipPub.length + 1;
         for (let i = 0; i < tipPub.length; i++) {
           if (tipPub[i].nombre.toLowerCase() === newTipPub.nombre.toLowerCase()) {

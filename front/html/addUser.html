@@ -73,7 +73,7 @@
                                         <a href="listUser.html" class="btn btn-secondary">
                                             Regresar
                                         </a>
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-primary" id="btnAgregar">
                                             Agregar
                                         </button>
                                     </div>
@@ -94,7 +94,19 @@
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (!currentUser) {
             window.location.href = "login.html";
+        } else if (currentUser.tipo !== 'admin') {
+            window.location.href = "list.html";
         }
+
+        let userData = JSON.parse(localStorage.getItem("userData"));
+
+        const queryString = window.location.search;
+
+        const urlParams = new URLSearchParams(queryString);
+
+        let userId = urlParams.get('id');
+
+        btnAgregar = document.getElementById("btnAgregar");
         nombre = document.getElementById("nombre");
         apellido = document.getElementById("apellido");
         correo = document.getElementById("correo");
@@ -146,17 +158,36 @@
             }
         }
 
+        if (userId) {
+            btnAgregar.innerText = "Guardar Cambios";
+            document.getElementById("tit-usu").innerText = "Editar Usuario";
+            if (userData) {
+                let userToEdit = userData.find(u => u.id == userId);
+                if (userToEdit) {
+                    nombre.value = userToEdit.nombre;
+                    apellido.value = userToEdit.apellido;
+                    correo.value = userToEdit.correo;
+                    telefono.value = userToEdit.telefono;
+                    clave.value = userToEdit.clave;
+                    tipo.value = userToEdit.tipo;
+                } else {
+                    alert("Usuario no encontrado.");
+                    window.location.href = "listUser.html";
+                }
+            } else {
+                alert("No hay usuarios almacenados.");
+                window.location.href = "listUser.html";
+            }
+        }
+
         document.addEventListener("submit", function (e) {
             e.preventDefault();
-
 
             //console.log(`nombre: ${nombre.value}`);
             //console.log(`apellido: ${apellido.value}`);
             //console.log(`telefono: ${telefono.value}`);
             //console.log(`correo: ${correo.value}`);
             //console.log(`clave: ${clave.value}`);
-
-            let userData = localStorage.getItem("userData");
 
             //console.log('datos de usuario en localstorage: ', userData);
 
@@ -169,32 +200,45 @@
                 tipo: tipo.value
             };
 
-            if (userData) {
-                userData = JSON.parse(userData);
-                userToAdd.id = userData.length + 1;
-                userData.forEach((user) => {
-                    if (user.correo === userToAdd.correo) {
-                        alert("El correo ingresado ya está registrado. Por favor, ingrese un correo diferente.");
-                        correo.value = "";
-                        userToAdd = null;
-                    }
-                });
+            if (userId) {
+                console.log(typeof userData);
+                let index = userData.findIndex(u => u.id == userId);
+                if (index !== -1) {
+                    userData[index] = { ...userData[index], ...userToAdd };
+                    localStorage.setItem("userData", JSON.stringify(userData));
+                    alert("Usuario actualizado correctamente.");
+                    window.location.href = "listUser.html";
+                    return;
+                } else {
+                    alert("Usuario no encontrado.");
+                }
             } else {
-                userData = [];
-                userToAdd.id = 1;
-            }
-            if (userToAdd) {
-                userData.push(userToAdd);
-                localStorage.setItem("userData", JSON.stringify(userData));
-                alert("Usuario agregado correctamente");
-            }
+                if (userData) {
+                    userToAdd.id = userData.length + 1;
+                    userData.forEach((user) => {
+                        if (user.correo === userToAdd.correo) {
+                            alert("El correo ingresado ya está registrado. Por favor, ingrese un correo diferente.");
+                            correo.value = "";
+                            userToAdd = null;
+                        }
+                    });
+                } else {
+                    userData = [];
+                    userToAdd.id = 1;
+                }
+                if (userToAdd) {
+                    userData.push(userToAdd);
+                    localStorage.setItem("userData", JSON.stringify(userData));
+                    alert("Usuario agregado correctamente");
+                }
 
-            nombre.value = "";
-            apellido.value = "";
-            telefono.value = "";
-            correo.value = "";
-            clave.value = "";
-            tipo.value = "";
+                nombre.value = "";
+                apellido.value = "";
+                telefono.value = "";
+                correo.value = "";
+                clave.value = "";
+                tipo.value = "";
+            }
         });
 
         fetch('navbar.html')

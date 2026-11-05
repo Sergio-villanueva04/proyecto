@@ -22,12 +22,14 @@
                     <div class="col-1"></div>
                     <div class="col-10">
                         <div class="row p-3 bg-primary align-items-center">
-                            <div class="col-10">
+                            <div class="col-12">
                                 <h2 class="text-white text-center">Publicaciones</h2>
                             </div>
-                            <div class="col-2">
-                                <button type="button" class="btn" style="color: white; background:orange">Agregar
-                                    Publicación</button>
+                            <div class="col-12 d-flex align-items-center justify-content-around" id="botonesCabeceraTabla">
+                                <a href="addPub.html" class="btn" style="color: white; background: orange;">Agregar Publicación</a>
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalFecha">
+                                  Filtrar por Fecha
+                                </button>
                             </div>
                         </div>
                         <div class="row bg-primary">
@@ -37,6 +39,9 @@
                                 <table class="table table-striped table-hover table-trans">
                                     <thead>
                                         <tr>
+                                            <td class="text-white bg-primary text-center fw-bold fs-5">Nombre de la
+                                                Publicación
+                                            </td>
                                             <td class="text-white bg-primary text-center fw-bold fs-5">Fecha de la
                                                 Publicación
                                             </td>
@@ -59,15 +64,159 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para filtrar por fecha -->
+    <div class="modal fade" id="modalFecha" tabindex="-1" aria-labelledby="modalFechaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="modalFechaLabel">Seleccione el rango de fechas a filtrar</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="list.html" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="fecha1" class="form-label">Desde:</label>
+                            <input type="date" class="form-control" id="fecha1" name="fecha1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="fecha2" class="form-label">Hasta:</label>
+                            <input type="date" class="form-control" id="fecha2" name="fecha2" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="./../style/js/bootstrap.min.js"></script>
     <script>
         function logout() {
             localStorage.removeItem('currentUser');
             window.location.href = "login.html";
         }
+
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (!currentUser) {
             window.location.href = "login.html";
+        }
+
+        const queryString = window.location.search;
+
+        const urlParams = new URLSearchParams(queryString);
+
+        let fecha1 = urlParams.get('fecha1');
+        let fecha2 = urlParams.get('fecha2');
+        let estatusPubs = urlParams.get('estatus');
+
+        if (!fecha1 && !fecha2) {
+            mesActual = new Date()
+            fecha1 = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
+            fecha2 = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
+            fecha1 = fecha1.toISOString().split('T')[0];
+            fecha2 = fecha2.toISOString().split('T')[0];
+        }
+        console.log(typeof fecha1, typeof fecha2);
+
+        if(!estatusPubs){
+            estatusPubs = 'Activo';
+        }
+
+        let userData = JSON.parse(localStorage.getItem('userData'));
+        let pubData = JSON.parse(localStorage.getItem('pubData'));
+        let redSoc = JSON.parse(localStorage.getItem('redSoc'));
+        let tipPub = JSON.parse(localStorage.getItem('tipPub'));
+
+        if (currentUser.tipo === 'admin') {
+            let thead = document.querySelector('thead tr');
+            thead.innerHTML += `<td class="text-white bg-primary text-center fw-bold fs-5">Estatus</td>
+            <td class="text-white bg-primary text-center fw-bold fs-5">Acciones</td>`;
+
+            let botonesCabeceraTabla = document.getElementById('botonesCabeceraTabla');
+            botonesCabeceraTabla.innerHTML += `<a class="btn btn-light" href="list.html?estatus=Activo&fecha1=${fecha1}&fecha2=${fecha2}">Filtrar Publicaciones Activas</a> <a class="btn btn-dark" href="list.html?estatus=Inactivo&fecha1=${fecha1}&fecha2=${fecha2}">Filtrar Publicaciones Inactivas</a>`;
+        }
+
+        function deletePublication(id) {
+            for(let i = 0; i < pubData.length; i++){
+                if(pubData[i].id === id){
+                    switch(pubData[i].estatus){
+                        case 'Activo':
+                            pubData[i].estatus = 'Inactivo';
+                            break;
+                        case 'Inactivo':
+                            pubData[i].estatus = 'Activo';
+                            break;
+                    }
+                    localStorage.setItem('pubData', JSON.stringify(pubData));
+                    alert('Publicación actualizada exitosamente');
+                    window.location.reload();
+                    return;
+                } else {
+                    alert('No se encontró la publicación');
+                    return;
+                }
+            }
+        }
+
+        if (pubData) {
+            let tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+            pubData.forEach((pub) => {
+                console.log(pub);
+                pubNombre = pub.nombre;
+                pubFecha = pub.fecha;
+                let [year, month, day] = pubFecha.split('-');
+                let date = new Date(year, month - 1, day); // Note: month is 0-indexed in JavaScript
+                let formattedDate = date.toLocaleString('es-VE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                pubTipo = tipPub.find(tipo => tipo.id === pub.tipo)?.nombre || 'Desconocido';
+                pubRed = redSoc.find(red => red.id === pub.red)?.nombre || 'Desconocido';
+                pubDinero = pub.dinero;
+                pubNomUsuario = userData.find(user => user.id === pub.usuario)?.nombre || 'Desconocido';
+                pubApelUsuario = userData.find(user => user.id === pub.usuario)?.apellido || 'Desconocido';
+                if (currentUser.tipo === 'admin' && new Date(pub.fecha) >= new Date(String(fecha1)) && new Date(pub.fecha) <= new Date(String(fecha2)) && pub.estatus === estatusPubs) {
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="text-center">${pubNombre}</td>
+                        <td class="text-center">${formattedDate}</td>
+                        <td class="text-center">${pubTipo}</td>
+                        <td class="text-center">${pubRed}</td>
+                        <td class="text-center">$${pubDinero}</td>
+                        <td class="text-center">${pubNomUsuario} ${pubApelUsuario}</td>
+                        <td class="text-center">${pub.estatus}</td>
+                        <td class="text-center">
+                            <a href="addPub.html?id=${pub.id}" class="btn btn-warning">Editar</a>
+                            <button class="btn btn-danger" onclick="deletePublication(${pub.id})">${pub.estatus === 'Activo' ? 'Desactivar' : 'Activar'}</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                } else if (currentUser.tipo === 'user' && pub.usuario === currentUser.id && pub.estatus === 'Activo' && new Date(pub.fecha) >= new Date(String(fecha1)) && new Date(pub.fecha) <= new Date(String(fecha2))) {
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="text-center">${pubNombre}</td>
+                        <td class="text-center">${formattedDate}</td>
+                        <td class="text-center">${pubTipo}</td>
+                        <td class="text-center">${pubRed}</td>
+                        <td class="text-center">$${pubDinero}</td>
+                        <td class="text-center">${pubNomUsuario} ${pubApelUsuario}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+            /*if (tbody.innerHTML.length === 0) {
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="10" class="text-center">No hay publicaciones para mostrar.</td>
+                `;
+                tbody.appendChild(row);
+            }*/
         }
 
         fetch('navbar.html')
@@ -100,6 +249,16 @@
                 }
             })
             .catch(error => console.error('Error loading the navbar:', error));
+
+            addEventListener('submit', (event) => {
+                event.preventDefault();
+                const form = event.target;
+                if (form.tagName === 'FORM') {
+                    const fecha1 = form.fecha1.value;
+                    const fecha2 = form.fecha2.value;
+                    window.location.href = `list.html?fecha1=${fecha1}&fecha2=${fecha2}`;
+                }
+            });
     </script>
 </body>
 

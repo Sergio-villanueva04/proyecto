@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agregar Publicación</title>
+    <link rel="stylesheet" href="./../style/css/bootstrap.min.css" />
+    <style>
+        .table-trans {
+            --bs-table-bg: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+
+<body style="
+      background-image: url(&quot;./../img/fondo.jpg&quot;);
+      background-size: cover;
+    ">
+    <div id="navbar"></div>
+    <div class="container min-vh-100 d-flex align-items-center">
+        <div class="row w-100">
+            <div class="col-12 align-items-center">
+                <div class="row justify-content-center">
+                    <div class="col-6">
+                        <div class="card">
+                            <div class="card-header text-white bg-primary">
+                                <h3 id="tit-usu">Datos de la Publicación</h3>
+                            </div>
+                            <div class="card-body">
+                                <form action="#" method="post">
+                                    <div class="m-3">
+                                        <label for="nombre" class="form-label">Nombre de la Publicación:</label>
+                                        <input type="text" class="form-control" id="nombre" required maxlength="50"
+                                            placeholder="Ingrese el nombre" onblur="checkVal(this.id)" />
+                                    </div>
+                                    <div class="m-3">
+                                        <label for="fecha" class="form-label">Fecha:</label>
+                                        <input type="date" class="form-control" id="fecha" required maxlength="50"
+                                            placeholder="Ingrese la fecha" onblur="checkVal(this.id)" />
+                                    </div>
+                                    <div class="m-3">
+                                        <label for="tipo" class="form-label">Tipo de Publicación:</label>
+                                        <select class="form-select" id="tipo" required onblur="checkVal(this.id)">
+                                            <option value="">Seleccione un tipo</option>
+                                        </select>
+                                    </div>
+                                    <div class="m-3">
+                                        <label for="red" class="form-label">Red Social:</label>
+                                        <select class="form-select" id="red" required onblur="checkVal(this.id)">
+                                            <option value="">Seleccione una red social</option>
+                                        </select>
+                                    </div>
+                                    <div class="m-3">
+                                        <label for="dinero" class="form-label">Dinero Invertido (en Dolares):</label>
+                                        <input type="text" id="dinero" class="form-control" value="0.00" inputmode="numeric" style="text-align: right;" required onblur="checkVal(this.id)" />
+                                    </div>
+                                    <div class="m-3 d-flex justify-content-between">
+                                        <a href="list.html" class="btn btn-secondary">
+                                            Regresar
+                                        </a>
+                                        <button type="submit" id="agregarBtn" class="btn btn-primary">
+                                            Agregar
+                                        </button>
+                                        <button type="button" id="editarBtn" class="btn btn-primary d-none" onclick="editarPublicacion()">
+                                            Editar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./../style/js/bootstrap.min.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = "login.html";
+        }
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = "login.html";
+        }
+
+        let pubData = JSON.parse(localStorage.getItem('pubData')) || [];
+
+        const queryString = window.location.search;
+
+        const urlParams = new URLSearchParams(queryString);
+
+        let pubId = urlParams.get('id');
+
+        let tipoSelect = document.getElementById('tipo');
+        let redSelect = document.getElementById('red');
+        let nombrePub = document.getElementById('nombre');
+        let fechaPub = document.getElementById('fecha');
+        let dineroPub = document.getElementById('dinero');
+        let agregarBtn = document.getElementById('agregarBtn');
+        let editarBtn = document.getElementById('editarBtn');
+
+        let tipos = JSON.parse(localStorage.getItem('tipPub')) || [];
+        tipos.forEach(tipo => {
+            if(tipo.estatus === 'Activo'){
+                let option = document.createElement('option');
+                option.value = tipo.id;
+                option.textContent = tipo.nombre;
+                tipoSelect.appendChild(option);
+            }
+        });
+
+        let redes = JSON.parse(localStorage.getItem('redSoc')) || [];
+        redes.forEach(red => {
+            if(red.estatus === 'Activo'){
+                let option = document.createElement('option');
+                option.value = red.id;
+                option.textContent = red.nombre;
+                redSelect.appendChild(option);
+            }
+        });
+
+        const dineroInput = document.getElementById('dinero');
+
+        dineroInput.addEventListener('input', function (e) {
+            let rawValue = this.value.replace(/\D/g, '');
+
+            if (rawValue === '') {
+                rawValue = '0';
+            }
+
+            let numberValue = parseInt(rawValue, 10) / 100;
+
+            this.value = numberValue.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        });
+
+        if (pubId && pubData.length > 0) {
+            let pubToEdit = pubData.find(pub => pub.id == pubId);
+
+            if (pubToEdit) {
+                nombrePub.value = pubToEdit.nombre;
+                fechaPub.value = pubToEdit.fecha;
+                tipoSelect.value = pubToEdit.tipo;
+                redSelect.value = pubToEdit.red;
+                dineroPub.value = parseFloat(pubToEdit.dinero.replace(/,/g, '')).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                agregarBtn.classList.add('d-none');
+                editarBtn.classList.remove('d-none');
+            }
+        }
+
+        dineroInput.addEventListener('click', function () {
+            this.setSelectionRange(this.value.length, this.value.length);
+        });
+
+        function checkVal(id) {
+            nombreRegex = /^[a-zA-ZÀ-ÿ :/,;."'#%()¿?¡!*-]+$/;
+            fecRegex = /^(19[0-9]{2}|2[0-9]{3})-(0[1-9]|1[012])-([123]0|[012][1-9]|31)$/;
+            tipoRegex = /[0-9]/;
+            redRegex = /[0-9]/;
+            dineroRegex = /^([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+$/;
+            switch (id) {
+                case "nombre":
+                    if (!nombreRegex.test(nombrePub.value.trim())) {
+                        alert("El nombre de la Publicación solo puede contener letras y espacios.");
+                        nombrePub.value = "";
+                    }
+                    break;
+                case "fecha":
+                    if (!fecRegex.test(fechaPub.value)) {
+                        alert("La fecha ingresada no es válida. Por favor, ingrese una fecha válida.");
+                        fechaPub.value = "";
+                    }
+                    break;
+                case "tipo":
+                    if (!tipoRegex.test(tipoSelect.value)) {
+                        alert("El tipo ingresado no es válido. Por favor, ingrese un tipo válido.");
+                        tipoSelect.value = "";
+                    }
+                    break;
+                case "red":
+                    if (!redRegex.test(redSelect.value)) {
+                        alert("La red ingresada no es válida. Por favor, ingrese una red válida.");
+                        redSelect.value = "";
+                    }
+                    break;
+                case "dinero":
+                    if (!dineroRegex.test(dineroPub.value)) {
+                        alert("El monto de dinero ingresado no es válido. Por favor, ingrese un monto válido.");
+                        dineroPub.value = "";
+                    }
+                    break;
+            }
+        }
+
+        function editarPublicacion() {
+            let pubToEdit = pubData.find(pub => pub.id == pubId);
+
+            if (pubToEdit) {
+                pubToEdit.nombre = nombrePub.value.trim();
+                pubToEdit.fecha = fechaPub.value;
+                pubToEdit.tipo = parseInt(tipoSelect.value);
+                pubToEdit.red = parseInt(redSelect.value);
+                pubToEdit.dinero = dineroPub.value;
+                localStorage.setItem("pubData", JSON.stringify(pubData));
+                alert("Publicación editada correctamente");
+                window.location.href = "list.html";
+            }
+        }
+
+        document.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+
+            //console.log(`nombre: ${nombre.value}`);
+            //console.log(`apellido: ${apellido.value}`);
+            //console.log(`telefono: ${telefono.value}`);
+            //console.log(`correo: ${correo.value}`);
+            //console.log(`clave: ${clave.value}`);
+
+            //console.log('datos de usuario en localstorage: ', userData);
+
+            let pubToAdd = {
+                nombre: nombrePub.value.trim(),
+                fecha: fechaPub.value,
+                tipo: parseInt(tipoSelect.value),
+                red: parseInt(redSelect.value),
+                dinero: dineroPub.value,
+                usuario: currentUser.id,
+                estatus: 'Activo'
+            };
+
+            if (pubData) {
+                pubToAdd.id = pubData.length + 1;
+                pubData.forEach((pub) => {
+                    if (pub.nombre === pubToAdd.nombre) {
+                        alert("El nombre de la publicación ingresado ya está registrado. Por favor, ingrese un nombre diferente.");
+                        nombrePub.value = "";
+                        pubToAdd = null;
+                    }
+                });
+            } else {
+                pubData = [];
+                pubToAdd.id = 1;
+            }
+            if (pubToAdd) {
+                pubData.push(pubToAdd);
+                localStorage.setItem("pubData", JSON.stringify(pubData));
+                alert("Publicación agregada correctamente");
+            }
+
+            nombrePub.value = "";
+            fechaPub.value = "";
+            tipoSelect.value = "";
+            redSelect.value = "";
+            dineroPub.value = "";
+        });
+
+        fetch('navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar').innerHTML = data;
+
+                let userString = localStorage.getItem('currentUser');
+
+                if (userString) {
+                    let currentUser = JSON.parse(userString);
+
+                    if (currentUser.tipo === 'admin') {
+                        let navContainer = document.querySelector('.navbar-nav');
+
+                        if (navContainer) {
+                            navContainer.innerHTML += `
+                        <li class="nav-item">
+                            <a class="nav-link" href="listRedSoc.html">Redes Sociales</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="listTipPub.html">Tipos de Publicaciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="listUser.html">Usuarios</a>
+                        </li>
+                    `;
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading the navbar:', error));
+    </script>
+</body>
+
+</html>

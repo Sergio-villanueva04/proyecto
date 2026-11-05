@@ -23,7 +23,7 @@
                     <div class="col-10">
                         <div class="row p-3 bg-primary align-items-center">
                             <div class="col-10">
-                                <h2 class="text-white text-center">Redes Sociales</h2>
+                                <h2 class="text-white text-center">Usuarios</h2>
                             </div>
                             <div class="col-2">
                                 <a href="addUser.html" class="btn" style="color: white; background: orange;">Agregar
@@ -41,6 +41,7 @@
                                             <td class="text-white bg-primary text-center fw-bold fs-5">Correo</td>
                                             <td class="text-white bg-primary text-center fw-bold fs-5">Teléfono</td>
                                             <td class="text-white bg-primary text-center fw-bold fs-5">Tipo</td>
+                                            <td class="text-white bg-primary text-center fw-bold fs-5">Opciones</td>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -61,9 +62,24 @@
             window.location.href = "login.html";
         }
 
+        function statusChange(userId){
+            let userData = localStorage.getItem("userData");
+            if (userData) {
+                userData = JSON.parse(userData);
+                const userIndex = userData.findIndex(item => item.id === userId);
+                if (userIndex !== -1) {
+                    userData[userIndex].tipo = 'Inactivo';
+                    localStorage.setItem("userData", JSON.stringify(userData));
+                    location.reload();
+                }
+            }
+        }
+
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (!currentUser) {
             window.location.href = "login.html";
+        } else if (currentUser.tipo !== 'admin') {
+            window.location.href = "list.html";
         }
 
         fetch('navbar.html')
@@ -106,10 +122,14 @@
                 userData.forEach(item => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${item.nombre} ${item.apellido}</td>
-                        <td>${item.correo}</td>
-                        <td>${item.telefono}</td>
-                        <td>${item.tipo}</td>
+                        <td class="text-center">${item.nombre} ${item.apellido}</td>
+                        <td class="text-center">${item.correo}</td>
+                        <td class="text-center">${item.telefono}</td>
+                        <td class="text-center">${item.tipo}</td>
+                        <td class="justify-content-center d-flex gap-2">
+                            <a href="addUser.html?id=${item.id}" class="btn btn-sm btn-primary">Editar</a>
+                            <button class="btn btn-sm btn-danger" ${item.tipo === 'Inactivo' ? 'disabled' : ''} ${userData.length <= 1 ? 'disabled' : ''} onclick="statusChange(${item.id})">Desactivar</button>
+                        </td>
                     `;
                     tableBody.appendChild(row);
                 });

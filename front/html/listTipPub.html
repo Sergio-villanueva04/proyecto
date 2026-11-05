@@ -39,6 +39,8 @@
                                         <tr>
                                             <td class="text-white bg-primary text-center fw-bold fs-5">Nombre
                                             </td>
+                                            <td class="text-white bg-primary text-center fw-bold fs-5">Estatus</td>
+                                            <td class="text-white bg-primary text-center fw-bold fs-5">Acciones</td>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -62,7 +64,12 @@
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (!currentUser) {
             window.location.href = "login.html";
+        } else if (currentUser.tipo !== 'admin') {
+            window.location.href = "list.html";
         }
+
+        let tipPub = JSON.parse(localStorage.getItem("tipPub"));
+
 
         fetch('navbar.html')
             .then(response => response.text())
@@ -96,35 +103,34 @@
             .catch(error => console.error('Error loading the navbar:', error));
 
         document.addEventListener('DOMContentLoaded', function () {
-            if (currentUser.tipo === 'admin') {
-                const tableHead = document.querySelector('thead tr');
-                tableHead.innerHTML += '<td class="text-white bg-primary text-center fw-bold fs-5">Estatus</td>';
-            }
             const tableBody = document.querySelector('tbody');
-            let tipPub = localStorage.getItem("tipPub");
             if (tipPub) {
-                tipPub = JSON.parse(tipPub);
                 tableBody.innerHTML = '';
                 tipPub.forEach(item => {
-                    if (currentUser.tipo === 'admin') {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${item.nombre}</td>
-                            <td>${item.estatus}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    } else {
-                        if (item.estatus === 'activo') {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${item.nombre}</td>
-                            `;
-                            tableBody.appendChild(row);
-                        }
-                    }
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="text-center">${item.nombre}</td>
+                        <td class="text-center">${item.estatus}</td>
+                        <td class="text-center">
+                            <a href="addTipPub.html?id=${item.id}" class="btn btn-sm btn-primary">Editar</a>
+                            <button onclick="updtTipPub(${item.id})" class="btn btn-sm btn-danger">${item.estatus === 'Inactivo' ? 'Activar' : 'Desactivar'}</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
                 });
             }
         });
+
+        function updtTipPub(id) {
+            if (tipPub) {
+                const tipPubIndex = tipPub.findIndex(item => item.id === id);
+                if (tipPubIndex !== -1) {
+                    tipPub[tipPubIndex].estatus = tipPub[tipPubIndex].estatus === 'Activo' ? 'Inactivo' : 'Activo';
+                    localStorage.setItem("tipPub", JSON.stringify(tipPub));
+                    location.reload();
+                }
+            }
+        }
     </script>
 </body>
 
